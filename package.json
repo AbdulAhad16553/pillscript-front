@@ -1,0 +1,42 @@
+{
+  "name": "philscript-front",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@apollo/client": "latest",
+    "@nhost/nextjs": "latest",
+    "@radix-ui/react-dialog": "latest",
+    "@radix-ui/react-dropdown-menu": "latest",
+    "@radix-ui/react-label": "latest",
+    "@radix-ui/react-select": "latest",
+    "@radix-ui/react-slot": "latest",
+    "@radix-ui/react-tabs": "latest",
+    "@radix-ui/react-toast": "latest",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "graphql": "^16.11.0",
+    "lucide-react": "^0.454.0",
+    "next": "^15.5.7",
+    "next-themes": "latest",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "sonner": "latest",
+    "tailwind-merge": "^2.5.5",
+    "tailwindcss-animate": "^1.0.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "@types/react": "^19.1.12",
+    "@types/react-dom": "^19.1.9",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.5",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5"
+  }
+}
