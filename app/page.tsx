@@ -4,11 +4,9 @@ import { useState } from "react"
 import { useQuery } from "@apollo/client/react"
 import { Search, Loader2, Package, Building2, Pill, Store } from "lucide-react"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { SEARCH_ALL } from "@/lib/graphql/queries"
-import { getNhostImageUrl } from "@/lib/utils"
+import { getNhostImageUrl, fuzzyMatchScore } from "@/lib/utils"
 
 interface SearchResult {
   medicalsubstances: Array<{
@@ -46,12 +44,24 @@ interface SearchResult {
 
 export default function HomePage() {
   const [searchTerm, setSearchTerm] = useState("")
+  const trimmedSearch = searchTerm.trim()
+  // Use more characters for "starts with" pattern
+  // For short terms (<= 6 chars), use most of the term; for longer terms, use first 4-5 chars
+  const startPatternLength = trimmedSearch.length >= 2 
+    ? trimmedSearch.length <= 6 
+      ? Math.max(3, trimmedSearch.length - 1) // Use most of short terms (e.g., "espro" -> 4 chars)
+      : 4 // Use first 4 chars for longer terms
+    : 0
+  const firstChars = startPatternLength > 0 ? trimmedSearch.substring(0, startPatternLength) : ""
+  
   const { data, loading, error } = useQuery<SearchResult>(SEARCH_ALL, {
     variables: {
-      textSearch: `%${searchTerm.trim()}%`,   // for text/string columns
-      citextSearch: `%${searchTerm.trim()}%`  // for citext columns
+      textSearch: `%${trimmedSearch}%`,   // for text/string columns - contains pattern
+      citextSearch: `%${trimmedSearch}%`,  // for citext columns - contains pattern
+      textSearchStart: firstChars ? `${firstChars}%` : `%`,   // for text/string columns - starts with first few chars
+      citextSearchStart: firstChars ? `${firstChars}%` : `%`  // for citext columns - starts with first few chars
     },
-    skip: !searchTerm || searchTerm.trim().length < 2,
+    skip: !searchTerm || trimmedSearch.length < 2,
   });
   
 
@@ -63,13 +73,8 @@ export default function HomePage() {
     products: [],
   }
 
-  const totalResults =
-    results.medicalsubstances.length +
-    results.companies.length +
-    results.brands.length +
-    results.products.length
-
-  const combinedResults = [
+  // Combine all results with fuzzy matching scores
+  const allResults = [
     // Products first (they have images)
     ...results.products.map((product) => ({
       id: `product-${product.productid}`,
@@ -85,6 +90,7 @@ export default function HomePage() {
         .filter(Boolean)
         .join(" "),
       imageUrl: product.image_id ? getNhostImageUrl(product.image_id) : null,
+      searchText: product.productname,
     })),
     // Brands (may have logo)
     ...results.brands.map((brand) => ({
@@ -94,6 +100,7 @@ export default function HomePage() {
       title: brand.brandname,
       subtitle: brand.company?.company_fullname || "",
       imageUrl: brand.logo_id ? getNhostImageUrl(brand.logo_id) : null,
+      searchText: brand.brandname,
     })),
     // Companies
     ...results.companies.map((company) => ({
@@ -103,6 +110,7 @@ export default function HomePage() {
       title: company.company_fullname,
       subtitle: company.company_displayname || "",
       imageUrl: null as string | null,
+      searchText: company.company_fullname,
     })),
     // Medical Substances
     ...results.medicalsubstances.map((substance) => ({
@@ -113,8 +121,25 @@ export default function HomePage() {
       subtitle:
         substance.therapeuticdrugclass?.therapeuticdrugclassname || "",
       imageUrl: null as string | null,
+      searchText: substance.medicalsubstancename,
     })),
   ]
+
+  // Score and rank results using fuzzy matching
+  const minScore = trimmedSearch.length <= 5 ? 0.15 : 0.2 // More lenient for shorter terms
+  
+  const scoredResults = allResults
+    .map((item) => ({
+      ...item,
+      score: fuzzyMatchScore(trimmedSearch, item.searchText),
+    }))
+    .filter((item) => item.score > minScore) // Filter out very low matches (more lenient for short terms)
+    .sort((a, b) => b.score - a.score) // Sort by score (highest first)
+    .slice(0, 15) // Limit to top 15 results
+
+  const combinedResults = scoredResults.map(({ searchText, ...item }) => item)
+  
+  const totalResults = combinedResults.length
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
@@ -123,29 +148,28 @@ export default function HomePage() {
           {/* Header */}
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-              PhilScript Search
+              PillScript Search
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
-              Search medical substances, companies, brands, and products
+            Search medicines by brand, generic, or company
             </p>
           </div>
 
           {/* Search Bar */}
-          <Card className="mb-8 shadow-lg">
-            <CardHeader>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="Search for medical substances, companies, brands, or products..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 h-12 text-lg"
-                />
+          <div className="relative">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground z-10" />
+              <Input
+                type="text"
+                placeholder="Search medicines by brand, generic, or company..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-12 pr-4 h-12 text-lg rounded-full border border-gray-300 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none"
+              />
 
-                {/* Dropdown results under search bar */}
-                {searchTerm.trim().length >= 2 && (
-                  <div className="absolute left-0 right-0 mt-2 bg-white dark:bg-gray-900 border border-border rounded-md shadow-lg max-h-80 overflow-y-auto z-50">
+              {/* Dropdown results under search bar */}
+              {searchTerm.trim().length >= 2 && (
+                <div className="absolute left-0 right-0 top-full bg-white dark:bg-gray-900 border-x border-b border-gray-300 dark:border-gray-700 rounded-b-2xl shadow-lg max-h-80 overflow-y-auto z-50">
                     {loading && (
                       <div className="flex items-center justify-center py-4 px-3 text-sm text-muted-foreground">
                         <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -167,10 +191,7 @@ export default function HomePage() {
 
                     {!loading && !error && totalResults > 0 && (
                       <div className="py-2">
-                        <div className="px-3 pb-2 text-xs text-muted-foreground">
-                          Found {totalResults} result
-                          {totalResults !== 1 ? "s" : ""}
-                        </div>
+                       
                         {combinedResults.map((item) => {
                           const Icon = item.icon
                           return (
@@ -184,7 +205,7 @@ export default function HomePage() {
                                 <img
                                   src={item.imageUrl || "/placeholder.svg"}
                                   alt={item.title}
-                                  className="h-10 w-10 rounded object-cover border border-border flex-shrink-0"
+                                  className="h-10 w-10 rounded object-cover flex-shrink-0"
                                 />
                               ) : (
                                 <div className="h-10 w-10 rounded bg-muted flex items-center justify-center flex-shrink-0">
@@ -218,9 +239,8 @@ export default function HomePage() {
                     )}
                   </div>
                 )}
-              </div>
-            </CardHeader>
-          </Card>
+            </div>
+          </div>
         </div>
       </div>
     </div>

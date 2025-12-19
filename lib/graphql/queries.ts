@@ -2,14 +2,15 @@ import { gql } from "@apollo/client"
 
 // Unified Search Query
 export const SEARCH_ALL = gql`
-  query SearchAll($textSearch: String!, $citextSearch: citext!) {
+  query SearchAll($textSearch: String!, $citextSearch: citext!, $textSearchStart: String!, $citextSearchStart: citext!) {
     medicalsubstances: medicalsubstance(
       where: {
         _or: [
           { medicalsubstancename: { _ilike: $textSearch } }
+          { medicalsubstancename: { _ilike: $textSearchStart } }
         ]
       }
-      limit: 10
+      limit: 50
     ) {
       medicalsubstanceid
       medicalsubstancename
@@ -23,9 +24,11 @@ export const SEARCH_ALL = gql`
         _or: [
           { company_fullname: { _ilike: $citextSearch } }
           { company_displayname: { _ilike: $citextSearch } }
+          { company_fullname: { _ilike: $citextSearchStart } }
+          { company_displayname: { _ilike: $citextSearchStart } }
         ]
       }
-      limit: 10
+      limit: 50
     ) {
       company_id
       company_fullname
@@ -33,8 +36,13 @@ export const SEARCH_ALL = gql`
     }
 
     brands: brand(
-      where: { brandname: { _ilike: $citextSearch } }
-      limit: 10
+      where: {
+        _or: [
+          { brandname: { _ilike: $citextSearch } }
+          { brandname: { _ilike: $citextSearchStart } }
+        ]
+      }
+      limit: 50
     ) {
       brandid
       brandname
@@ -50,9 +58,10 @@ export const SEARCH_ALL = gql`
       where: {
         _or: [
           { productname: { _ilike: $textSearch } }
+          { productname: { _ilike: $textSearchStart } }
         ]
       }
-      limit: 10
+      limit: 50
     ) {
       productid
       productname
