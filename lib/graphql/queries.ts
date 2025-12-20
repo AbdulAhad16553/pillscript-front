@@ -33,6 +33,9 @@ export const SEARCH_ALL = gql`
       company_id
       company_fullname
       company_displayname
+      industry{
+      industryname
+    }
     }
 
     brands: brand(

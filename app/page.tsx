@@ -20,6 +20,9 @@ interface SearchResult {
     company_id: string
     company_fullname: string
     company_displayname: string | null
+    industry: {
+      industryname: string
+    } | null
   }>
   brands: Array<{
     brandid: number
@@ -44,7 +47,10 @@ interface SearchResult {
 
 export default function HomePage() {
   const [searchTerm, setSearchTerm] = useState("")
+  const [isFocused, setIsFocused] = useState(false) // Added focus state
+  
   const trimmedSearch = searchTerm.trim()
+  const showDropdown = trimmedSearch.length >= 2 && isFocused;
   // Use more characters for "starts with" pattern
   // For short terms (<= 6 chars), use most of the term; for longer terms, use first 4-5 chars
   const startPatternLength = trimmedSearch.length >= 2 
@@ -107,8 +113,8 @@ export default function HomePage() {
       id: `company-${company.company_id}`,
       type: "Company" as const,
       icon: Building2,
-      title: company.company_fullname,
-      subtitle: company.company_displayname || "",
+      title: company.company_displayname,
+      subtitle: company.industry?.industryname || "",
       imageUrl: null as string | null,
       searchText: company.company_fullname,
     })),
@@ -151,83 +157,88 @@ export default function HomePage() {
               PillScript Search
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
-            Search medicines by brand, generic, or company
+              Search medicines by brand, generic, or company
             </p>
           </div>
 
-          {/* Search Bar */}
-          <div className="relative">
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground z-10" />
-              <Input
-                type="text"
-                placeholder="Search medicines by brand, generic, or company..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-12 pr-4 h-12 text-lg rounded-full border border-gray-300 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none"
-              />
+          {/* Search Container */}
+          <div className="relative group max-w-2xl mx-auto">
+            <div 
+              className={`
+                relative flex flex-col w-full transition-all duration-200
+                bg-white dark:bg-gray-900 
+                ${showDropdown 
+                  ? "rounded-[24px] shadow-xl border border-gray-300 dark:border-gray-700" 
+                  : "rounded-full shadow-md border border-gray-200 dark:border-gray-800 hover:shadow-lg"}
+              `}
+            >
+              {/* Input Wrapper */}
+              <div className="relative flex items-center">
+                <Search className="absolute left-5 h-5 w-5 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Search medicines..."
+                  value={searchTerm}
+                  onFocus={() => setIsFocused(true)}
+                  onBlur={() => setTimeout(() => setIsFocused(false), 200)} // Timeout to allow clicks on results
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className={`
+                    pl-14 pr-6 h-14 text-lg bg-transparent border-none 
+                    focus-visible:ring-0 focus-visible:ring-offset-0
+                    ${showDropdown ? "rounded-t-[24px] rounded-b-none" : "rounded-full"}
+                  `}
+                />
+              </div>
 
-              {/* Dropdown results under search bar */}
-              {searchTerm.trim().length >= 2 && (
-                <div className="absolute left-0 right-0 top-full bg-white dark:bg-gray-900 border-x border-b border-gray-300 dark:border-gray-700 rounded-b-2xl shadow-lg max-h-80 overflow-y-auto z-50">
+              {/* Dropdown results - Now inside the same container logic */}
+              {showDropdown && (
+                <div className="w-full border-t border-gray-100 dark:border-gray-800 overflow-hidden rounded-b-[24px]">
                     {loading && (
-                      <div className="flex items-center justify-center py-4 px-3 text-sm text-muted-foreground">
+                      <div className="flex items-center justify-center py-6 text-sm text-muted-foreground">
                         <Loader2 className="h-4 w-4 animate-spin mr-2" />
                         Searching...
                       </div>
                     )}
 
-                    {error && !loading && (
-                      <div className="py-3 px-3 text-sm text-red-600 dark:text-red-400">
-                        Error: {error.message}
-                      </div>
-                    )}
-
                     {!loading && !error && totalResults === 0 && (
-                      <div className="py-3 px-3 text-sm text-muted-foreground">
+                      <div className="py-6 px-6 text-sm text-muted-foreground">
                         No results found for "{searchTerm}"
                       </div>
                     )}
 
                     {!loading && !error && totalResults > 0 && (
-                      <div className="py-2">
-                       
+                      <div className="pb-4 max-h-[450px] overflow-y-auto">
                         {combinedResults.map((item) => {
                           const Icon = item.icon
                           return (
                             <button
                               key={item.id}
                               type="button"
-                              className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-muted/70 focus:bg-muted/70 focus:outline-none"
+                              className="w-full flex items-center gap-4 px-6 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors focus:outline-none"
                             >
-                              {/* Image or icon */}
                               {item.imageUrl ? (
                                 <img
-                                  src={item.imageUrl || "/placeholder.svg"}
-                                  alt={item.title}
-                                  className="h-10 w-10 rounded object-cover flex-shrink-0"
+                                  src={item.imageUrl}
+                                  alt=""
+                                  className="h-12 w-12 rounded-md object-cover flex-shrink-0"
                                 />
                               ) : (
-                                <div className="h-10 w-10 rounded bg-muted flex items-center justify-center flex-shrink-0">
-                                  <Icon className="h-5 w-5 text-muted-foreground" />
+                                <div className="h-12 w-12 rounded-md flex items-center justify-center flex-shrink-0">
+                                  <Icon className="h-5 w-5 text-gray-500" />
                                 </div>
                               )}
 
-                              {/* Text */}
                               <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between gap-2">
-                                  <p className="font-medium text-sm truncate">
+                                <div className="flex items-center justify-between">
+                                  <p className="font-semibold text-sm text-gray-900 dark:text-gray-100 truncate">
                                     {item.title}
                                   </p>
-                                  <Badge
-                                    variant="secondary"
-                                    className="text-[10px] px-1.5 py-0"
-                                  >
+                                  <Badge variant="outline" className="text-[9px] uppercase tracking-wider font-bold opacity-70">
                                     {item.type}
                                   </Badge>
                                 </div>
                                 {item.subtitle && (
-                                  <p className="text-xs text-muted-foreground truncate mt-0.5">
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                                     {item.subtitle}
                                   </p>
                                 )}
@@ -237,8 +248,8 @@ export default function HomePage() {
                         })}
                       </div>
                     )}
-                  </div>
-                )}
+                </div>
+              )}
             </div>
           </div>
         </div>
