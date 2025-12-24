@@ -117,10 +117,9 @@ export const GET_COMPANIES = gql`
       company_id
       company_fullname
       company_displayname
-      company_shortname
-      company_email
-      company_phone
-      isactive
+      industry{
+      industryname
+    }
     }
   }
 `
