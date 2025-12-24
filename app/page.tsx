@@ -268,7 +268,43 @@ import { Badge } from "@/components/ui/badge"
 import { SEARCH_ALL } from "@/lib/graphql/queries"
 import { getNhostImageUrl, fuzzyMatchScore } from "@/lib/utils"
 
-// ... (Interface SearchResult remains the same)
+interface SearchResult {
+  medicalsubstances: Array<{
+    medicalsubstanceid: string
+    medicalsubstancename: string
+    therapeuticdrugclass: {
+      therapeuticdrugclassname: string
+    } | null
+  }>
+  companies: Array<{
+    company_id: string
+    company_fullname: string
+    company_displayname: string | null
+    industry: {
+      industryname: string
+    } | null
+  }>
+  brands: Array<{
+    brandid: number
+    brandname: string
+    logo_id: string | null
+    company: {
+      company_fullname: string
+    } | null
+  }>
+  products: Array<{
+    productid: number
+    productname: string
+    logo_id?: string | null
+    image_id: string | null
+    brand: {
+      brandname: string
+    } | null
+    company: {
+      company_fullname: string
+    } | null
+  }>
+}
 
 export default function HomePage() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -291,10 +327,10 @@ export default function HomePage() {
   const results = data || { medicalsubstances: [], companies: [], brands: [], products: [] }
 
   const allResults = [
-    ...results.products.map((p) => ({ id: `p-${p.productid}`, type: "Product", icon: Package, title: p.productname, subtitle: p.brand?.brandname || p.company?.company_fullname || "", imageUrl: p.image_id ? getNhostImageUrl(p.image_id) : null, searchText: p.productname })),
-    ...results.brands.map((b) => ({ id: `b-${b.brandid}`, type: "Brand", icon: Store, title: b.brandname, subtitle: b.company?.company_fullname || "", imageUrl: b.logo_id ? getNhostImageUrl(b.logo_id) : null, searchText: b.brandname })),
-    ...results.companies.map((c) => ({ id: `c-${c.company_id}`, type: "Company", icon: Building2, title: c.company_displayname || c.company_fullname, subtitle: c.industry?.industryname || "", imageUrl: null, searchText: c.company_fullname })),
-    ...results.medicalsubstances.map((s) => ({ id: `s-${s.medicalsubstanceid}`, type: "Substance", icon: Pill, title: s.medicalsubstancename, subtitle: s.therapeuticdrugclass?.therapeuticdrugclassname || "", imageUrl: null, searchText: s.medicalsubstancename })),
+    ...results.products.map((p :any) => ({ id: `p-${p.productid}`, type: "Product", icon: Package, title: p.productname, subtitle: p.brand?.brandname || p.company?.company_fullname || "", imageUrl: p.image_id ? getNhostImageUrl(p.image_id) : null, searchText: p.productname })),
+    ...results.brands.map((b :any) => ({ id: `b-${b.brandid}`, type: "Brand", icon: Store, title: b.brandname, subtitle: b.company?.company_fullname || "", imageUrl: b.logo_id ? getNhostImageUrl(b.logo_id) : null, searchText: b.brandname })),
+    ...results.companies.map((c :any) => ({ id: `c-${c.company_id}`, type: "Company", icon: Building2, title: c.company_displayname || c.company_fullname, subtitle: c.industry?.industryname || "", imageUrl: null, searchText: c.company_fullname })),
+    ...results.medicalsubstances.map((s :any) => ({ id: `s-${s.medicalsubstanceid}`, type: "Substance", icon: Pill, title: s.medicalsubstancename, subtitle: s.therapeuticdrugclass?.therapeuticdrugclassname || "", imageUrl: null, searchText: s.medicalsubstancename })),
   ]
 
   const scoredResults = allResults
