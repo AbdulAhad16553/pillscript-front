@@ -10,6 +10,7 @@ import {
   Pill,
   Store,
   X,
+  Zap,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -134,12 +135,14 @@ export default function HomePage() {
         <div className="container mx-auto px-4 py-12">
           <Header />
           <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-8">
-              <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-                PillScrip Search
+            <div className="text-center mb-8 flex flex-col items-center">
+              <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2 max-w-2xl">
+                Pakistan's #1 Intelligent Medicine
+                <span className="block lg:inline"> Search Platform</span>
               </h1>
               <p className="text-gray-600 dark:text-gray-400">
-                Search medicines by brand, generic, or company
+                Find, compare & explore medicines by brand, generic, company &
+                strength.
               </p>
             </div>
 
@@ -151,33 +154,45 @@ export default function HomePage() {
                 {/* INPUT CONTAINER */}
                 <div
                   className={`
-                  relative flex items-center min-h-[56px] transition-all duration-200
-                  bg-white dark:bg-gray-900 border shadow-md
-                  ${
-                    showDropdown
-                      ? "rounded-t-[24px] border-gray-300 dark:border-gray-700 shadow-xl"
-                      : "rounded-full border-gray-200 dark:border-gray-800 hover:shadow-lg"
-                  }
-                `}
+    relative flex items-center min-h-[56px] transition-all duration-200
+    bg-white dark:bg-gray-900 border shadow-md px-2
+    ${
+      showDropdown
+        ? "rounded-t-[24px] border-gray-300 dark:border-gray-700 shadow-xl"
+        : "rounded-full border-gray-200 dark:border-gray-800 hover:shadow-lg"
+    }
+  `}
                 >
-                  <Search className="absolute left-6 h-5 w-5 text-muted-foreground" />
-                  <Input
-                    type="text"
-                    placeholder="Search medicines..."
-                    value={searchTerm}
-                    onFocus={() => setIsFocused(true)}
-                    onBlur={() => setTimeout(() => setIsFocused(false), 200)}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-14 pr-12 h-14 text-lg bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 w-full"
-                  />
-                  {searchTerm && (
-                    <button
-                      onClick={() => setSearchTerm("")}
-                      className="absolute right-6 p-1"
-                    >
-                      <X className="h-4 w-4 text-gray-400" />
-                    </button>
-                  )}
+                  {/* LEFT: Search Icon + Input */}
+                  <div className="relative flex-1 flex items-center">
+                    <Search className="absolute left-4 h-5 w-5 text-gray-400" />
+
+                    <Input
+                      type="text"
+                      placeholder="Search medicines by name, brand, generic..."
+                      value={searchTerm}
+                      onFocus={() => setIsFocused(true)}
+                      onBlur={() => setTimeout(() => setIsFocused(false), 200)}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-12 pr-10 h-14 text-sm bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 w-full"
+                    />
+
+                    {searchTerm && (
+                      <button
+                        onClick={() => setSearchTerm("")}
+                        className="absolute right-2 p-1"
+                      >
+                        <X className="h-4 w-4 text-gray-400" />
+                      </button>
+                    )}
+                  </div>
+
+                  <button className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition px-4 py-2 rounded-full ml-2">
+                    <Zap className="h-4 w-4 text-blue-500" />
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                      Compare
+                    </span>
+                  </button>
                 </div>
 
                 {/* DROPDOWN CONTAINER */}
